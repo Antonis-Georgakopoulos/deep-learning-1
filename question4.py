@@ -2,7 +2,6 @@ import math, random
 import numpy as np
 from data import load_mnist, load_synth
 
-
 #extras
 from urllib import request
 import gzip
@@ -176,29 +175,56 @@ def backward_pass(x, v, w, h, target, probabilities, learning_rate, bias1, bias2
     return bias1_updated_values, bias2_updated_values, w_updated_weights, v_updated_weights
 
 
-def visual(loss_list,l):
-    
-    # Folder to save results
-    if not os.path.exists("./Results"):
-        os.makedirs("./Results")
-    
+def visual(loss_list, l):
     # Create count of the number of epochs
     epoch_count = range(len(loss_list))
 
-    # Visualize loss history
-    plt.plot(epoch_count, loss_list, 'b')
+    # Create a figure and axis object
+    plt.figure(figsize=(8, 6))  # Adjust the figure size as needed
+
+    # Visualize loss history with a smoother line, and add marker points
+    plt.plot(epoch_count, loss_list, color='blue', linestyle='-', marker='o', markersize=4, label=l + ' Loss')
+
+    # Set plot title and labels
+    plt.title('Loss Over Epochs', fontsize=16)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('Loss', fontsize=12)
+
+    # Add legend and grid
+    plt.legend(loc='upper right', fontsize=12)
+    plt.grid(True)
+
+    # Save the plot to a file (create the 'Results' folder if it doesn't exist)
+    if not os.path.exists("./Results"):
+        os.makedirs("./Results")
+    plt.tight_layout()  # Adjust layout for better spacing
+    plt.savefig("./Results/" + l + "_Loss_Q4.png")
+    plt.show()  # Display the plot (optional - remove if saving only)
+
+
+# def visual(loss_list,l):
     
-    plt.legend([ l + 'Loss'])
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.savefig("./Results/"+l+"_Loss_Q4.png")
-    plt.close()
+#     # Folder to save results
+#     if not os.path.exists("./Results"):
+#         os.makedirs("./Results")
+    
+#     # Create count of the number of epochs
+#     epoch_count = range(len(loss_list))
+
+#     # Visualize loss history
+#     plt.plot(epoch_count, loss_list, 'b')
+    
+#     plt.legend([ l + 'Loss'])
+#     plt.xlabel('Epoch')
+#     plt.ylabel('Loss')
+#     plt.savefig("./Results/"+l+"_Loss_Q4.png")
+#     plt.close()
 
 
 
 if __name__ == "__main__":
 
-    # target class
+    # target class (True)
     target = 0
 
     learning_rate = 0.01
@@ -214,24 +240,33 @@ if __name__ == "__main__":
     bias1 = [0.0, 0.0, 0.0]
     bias2 = [0.0, 0.0]
 
-    train_loss_list = []
-    val_loss_list = []
-    y_pred_list = []
+    loss_training_list = []
+    loss_validation_list = []
 
-    for epoch in range(3):
+    for epoch in range(15):
+        temp_epoch_list_training = []
+        temp_epoch_list_validation = []
+
+        # training part
         for i in range(len(xtrain)):
 
-            loss, h, probabilities  = forward_pass(xtrain[i], bias1, bias2, w, v, ytrain[i])
-            bias1, bias2, w, v = backward_pass(xtrain[i], v, w, h, ytrain[i] ,probabilities, learning_rate, bias1, bias2)
+            # perform a forward pass and a backward pass to update the weights and biases
+            loss, h, probabilities  = forward_pass(xtrain[i], bias1, bias2, w, v, target)
+            bias1, bias2, w, v = backward_pass(xtrain[i], v, w, h, target ,probabilities, learning_rate, bias1, bias2)
 
-            train_loss_list.append(loss)
-            y_pred_list.append(probabilities)
+            # add the losses of this epoch to the list
+            temp_epoch_list_training.append(loss)
 
+        # validation part
         for i in range(len(xval)):
-            loss, temp1, temp2  = forward_pass(xval[i], bias1, bias2, w, v, yval[i])
-            val_loss_list.append(loss)
+            loss, temp1, temp2  = forward_pass(xval[i], bias1, bias2, w, v, target)
+            temp_epoch_list_validation.append(loss)
+        
+        # get the mean values of the lists for training and validation into the main lists
+        loss_training_list.append(sum(temp_epoch_list_training) / len(temp_epoch_list_training))
+        loss_validation_list.append(sum(temp_epoch_list_validation) / len(temp_epoch_list_validation))
 
     # Loss Visualization
-    visual(train_loss_list, "Training")
+    visual(loss_training_list, "Training")
     # Loss Visualization
-    visual(val_loss_list, 'Val')
+    visual(loss_validation_list, 'Validation')
